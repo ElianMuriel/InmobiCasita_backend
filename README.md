@@ -42,6 +42,7 @@ Entidades principales:
 ### 3.1. Clonar el repositorio
 
 git clone https://github.com/ElianMuriel/InmobiCasita_backend.git
+
 cd InmobiCasita_backend
 
 
