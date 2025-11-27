@@ -41,15 +41,15 @@ Entidades principales:
 
 ### 3.1. Clonar el repositorio
 
-git clone https://github.com/ElianMuriel/InmobiCasita_backend.git
+- git clone https://github.com/ElianMuriel/InmobiCasita_backend.git
 
-cd InmobiCasita_backend
+- cd InmobiCasita_backend
 
 
 ### 3.2. Crear y activar entorno virtual
-python -m venv .venv
-.\.venv\Scripts\activate   # Windows
-source .venv/bin/activate  # Linux/Mac
+- python -m venv .venv
+- .\.venv\Scripts\activate   # para Windows
+- source .venv/bin/activate  # para Linux/Mac
 
 ### 3.3. Instalar dependencias
 pip install -r requirements.txt
@@ -69,12 +69,12 @@ Creamos un archivo .env y colocamos la informacion solicitada
 Creamos en PostgreSQL una base de datos con el mismo nombre que colocamos en DB_NAM
 
 ### 3.6. Aplicar migraciones
-python manage.py makemigrations
-python manage.py migrate
+- python manage.py makemigrations
+- python manage.py migrate
 
 ### 3.7. Crear superusuario
 
-python manage.py createsuperuser
+- python manage.py createsuperuser
 Completamos la informacion solicitada, nombre, correo y contraseña, para crear al superusuario
 
 ### 3.8. Ejecutar servidor
@@ -119,9 +119,9 @@ GET (list, retrieve): accesibles sin autenticación.
 
 POST, PUT, PATCH, DELETE: requieren:
 
-Usuario autenticado con JWT (Authorization: Bearer <access_token>)
+- Usuario autenticado con JWT (Authorization: Bearer <access_token>)
 
-Usuario con is_staff = True (administrador).
+- Usuario con is_staff = True (administrador).
 
 En caso de no enviar token o no ser admin:
 
@@ -306,6 +306,6 @@ Seleccionar InmobiCasita_API.postman_collection.json.
 
 Seleccionar el environment con:
 
-base_url = http://127.0.0.1:8000
+- base_url = http://127.0.0.1:8000
 
-access_token (token JWT obtenido desde login).
+- access_token (token JWT obtenido desde login).
