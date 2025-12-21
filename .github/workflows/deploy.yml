@@ -9,6 +9,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Verify env (safe)
+        env:
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+        run: |
+          python -c "import os; print('DJANGO_SECRET_KEY set:', bool(os.getenv('DJANGO_SECRET_KEY')))"
+
       - name: Checkout
         uses: actions/checkout@v4
 
