@@ -1,0 +1,52 @@
+name: CI/CD - InmobiCasita (Azure VM)
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  ci_cd:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Django check (CI)
+        env:
+          DJANGO_SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+          DEBUG: "False"
+          ALLOWED_HOSTS: "20.171.254.45,localhost,127.0.0.1"
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: "localhost"
+          DB_PORT: "5432"
+        run: |
+          python manage.py check
+
+      - name: Deploy to Azure VM (CD)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            cd /opt/inmobicasita
+            git pull origin main
+            source venv/bin/activate
+            pip install -r requirements.txt
+            python manage.py migrate
+            python manage.py collectstatic --noinput
+            sudo systemctl restart inmobicasita
+            sudo systemctl restart nginx
