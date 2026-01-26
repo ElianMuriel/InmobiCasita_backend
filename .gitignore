@@ -2,6 +2,18 @@
 /.venv
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
 .env
 *.sqlite3
+<<<<<<< Updated upstream
 static/
+=======
+*.db
+static/
+media/
+*.log
+*.backup
+.DS_Store
+>>>>>>> Stashed changes
