@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .models import (
     Rol, Propietario, Cliente, TipoInmueble,
@@ -73,7 +74,7 @@ class InmuebleViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['codigo_interno', 'titulo', 'ciudad', 'barrio', 'tipo_operacion', 'estado']
-       
+
     def get_queryset(self):
         queryset = Inmueble.objects.all()
         usuario = self.request.query_params.get('usuario', None)
@@ -106,6 +107,34 @@ class PagoViewSet(viewsets.ModelViewSet):
     search_fields = ['contrato__id', 'metodo_pago']
 
 
+class CustomTokenObtainPairView(TokenObtainPairView):
+    """
+    Vista personalizada para el login que agrega claims personalizados al token
+    """
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            user = User.objects.get(username=request.data.get('username'))
+            refresh = RefreshToken.for_user(user)
+            # Agregar claims personalizados
+            refresh['username'] = user.username
+            refresh['is_staff'] = user.is_staff
+            refresh['user_id'] = user.id
+            refresh['is_vendedor'] = Inmueble.objects.filter(usuario=user).exists()
+            # Verificar si el usuario tiene perfil de cliente
+            try:
+                cliente_profile = Cliente.objects.get(user=user)
+                refresh['is_cliente'] = True
+                refresh['cliente_id'] = cliente_profile.id
+            except Cliente.DoesNotExist:
+                refresh['is_cliente'] = False
+                refresh['cliente_id'] = None
+            # Actualizar la respuesta con el nuevo token
+            response.data['access'] = str(refresh.access_token)
+            response.data['refresh'] = str(refresh)
+        return response
+
+
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -121,6 +150,7 @@ class ProfileView(APIView):
             "is_staff": user.is_staff,
             "is_superuser": user.is_superuser,
         })
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -195,6 +225,13 @@ def register(request):
         )
 
         refresh = RefreshToken.for_user(user)
+        # Agregar claims personalizados al token
+        refresh['username'] = user.username
+        refresh['is_staff'] = user.is_staff
+        refresh['user_id'] = user.id
+        refresh['is_vendedor'] = Inmueble.objects.filter(usuario=user).exists()
+        refresh['is_cliente'] = True
+        refresh['cliente_id'] = cliente.id
 
         return Response({
             'access': str(refresh.access_token),

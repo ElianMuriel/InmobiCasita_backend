@@ -1,4 +1,3 @@
-
 """
 Django settings for inmobicasita_api project.
 
@@ -125,7 +124,6 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ],
 }
-
 
 
 # Internationalization
