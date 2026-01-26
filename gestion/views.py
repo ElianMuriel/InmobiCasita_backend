@@ -114,24 +114,37 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200:
-            user = User.objects.get(username=request.data.get('username'))
-            refresh = RefreshToken.for_user(user)
-            # Agregar claims personalizados
-            refresh['username'] = user.username
-            refresh['is_staff'] = user.is_staff
-            refresh['user_id'] = user.id
-            refresh['is_vendedor'] = Inmueble.objects.filter(usuario=user).exists()
-            # Verificar si el usuario tiene perfil de cliente
             try:
-                cliente_profile = Cliente.objects.get(user=user)
-                refresh['is_cliente'] = True
-                refresh['cliente_id'] = cliente_profile.id
-            except Cliente.DoesNotExist:
-                refresh['is_cliente'] = False
-                refresh['cliente_id'] = None
-            # Actualizar la respuesta con el nuevo token
-            response.data['access'] = str(refresh.access_token)
-            response.data['refresh'] = str(refresh)
+                user = User.objects.get(username=request.data.get('username'))
+                # Obtener el refresh token de la respuesta
+                refresh_token_str = response.data.get('refresh')
+                if refresh_token_str:
+                    refresh = RefreshToken(refresh_token_str)
+                else:
+                    refresh = RefreshToken.for_user(user)
+                
+                # Agregar claims personalizados
+                refresh['username'] = user.username
+                refresh['is_staff'] = user.is_staff
+                refresh['user_id'] = user.id
+                refresh['is_vendedor'] = Inmueble.objects.filter(usuario=user).exists()
+                # Verificar si el usuario tiene perfil de cliente
+                try:
+                    cliente_profile = Cliente.objects.get(user=user)
+                    refresh['is_cliente'] = True
+                    refresh['cliente_id'] = cliente_profile.id
+                except Cliente.DoesNotExist:
+                    refresh['is_cliente'] = False
+                    refresh['cliente_id'] = None
+                
+                # Actualizar la respuesta con el nuevo token
+                response.data['access'] = str(refresh.access_token)
+                response.data['refresh'] = str(refresh)
+            except Exception as e:
+                # Si hay error, devolver la respuesta original
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error al personalizar token: {str(e)}")
         return response
 
 
