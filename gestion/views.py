@@ -20,27 +20,40 @@ from .serializers import (
 )
 
 
-class IsAdminOrReadOnly(permissions.BasePermission):
+class IsAdminOrVendedorOrReadOnly(permissions.BasePermission):
     """
     Lectura para todos.
-    Crear / actualizar / eliminar solo para usuarios admin (is_staff=True).
+    Crear / actualizar para admin (is_staff=True) y vendedores (grupo Vendedor).
+    Eliminar solo para admin.
     """
-
     def has_permission(self, request, view):
         if request.method in permissions.SAFE_METHODS:
             return True
-
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.is_staff
-        )
+        
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Admin puede hacer todo
+        if request.user.is_staff:
+            return True
+        
+        # Vendedor puede crear y editar, pero no eliminar
+        if request.method == 'DELETE':
+            return False  # Solo admin puede eliminar
+        
+        # Verificar si es vendedor
+        from django.contrib.auth.models import Group
+        vendedor_group = Group.objects.filter(name='Vendedor').first()
+        if vendedor_group and request.user.groups.filter(name='Vendedor').exists():
+            return True  # Vendedor puede crear y editar
+        
+        return False
 
 
 class RolViewSet(viewsets.ModelViewSet):
     queryset = Rol.objects.all()
     serializer_class = RolSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrVendedorOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['nombre_rol']
 
@@ -48,7 +61,7 @@ class RolViewSet(viewsets.ModelViewSet):
 class PropietarioViewSet(viewsets.ModelViewSet):
     queryset = Propietario.objects.all()
     serializer_class = PropietarioSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrVendedorOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['nombres', 'apellidos', 'identificacion', 'ciudad']
 
@@ -56,7 +69,7 @@ class PropietarioViewSet(viewsets.ModelViewSet):
 class ClienteViewSet(viewsets.ModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrVendedorOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['nombres', 'apellidos', 'identificacion', 'ciudad', 'tipo_cliente']
 
@@ -64,7 +77,7 @@ class ClienteViewSet(viewsets.ModelViewSet):
 class TipoInmuebleViewSet(viewsets.ModelViewSet):
     queryset = TipoInmueble.objects.all()
     serializer_class = TipoInmuebleSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrVendedorOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['nombre_tipo']
 
@@ -72,7 +85,7 @@ class TipoInmuebleViewSet(viewsets.ModelViewSet):
 class InmuebleViewSet(viewsets.ModelViewSet):
     queryset = Inmueble.objects.all()
     serializer_class = InmuebleSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrVendedorOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['codigo_interno', 'titulo', 'ciudad', 'barrio', 'tipo_operacion', 'estado']
 
@@ -87,7 +100,7 @@ class InmuebleViewSet(viewsets.ModelViewSet):
 class VisitaViewSet(viewsets.ModelViewSet):
     queryset = Visita.objects.all()
     serializer_class = VisitaSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrVendedorOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['inmueble__codigo_interno', 'cliente__nombres', 'cliente__apellidos', 'estado']
 
@@ -95,7 +108,7 @@ class VisitaViewSet(viewsets.ModelViewSet):
 class ContratoViewSet(viewsets.ModelViewSet):
     queryset = Contrato.objects.all()
     serializer_class = ContratoSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrVendedorOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['tipo_contrato', 'estado', 'inmueble__codigo_interno', 'cliente__nombres', 'cliente__apellidos']
 
@@ -103,7 +116,7 @@ class ContratoViewSet(viewsets.ModelViewSet):
 class PagoViewSet(viewsets.ModelViewSet):
     queryset = Pago.objects.all()
     serializer_class = PagoSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminOrVendedorOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['contrato__id', 'metodo_pago']
 
