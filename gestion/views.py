@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from .models import (
     Rol, Propietario, Cliente, TipoInmueble,
@@ -107,45 +108,34 @@ class PagoViewSet(viewsets.ModelViewSet):
     search_fields = ['contrato__id', 'metodo_pago']
 
 
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        
+        # Agregar claims personalizados al access token
+        token['username'] = user.username
+        token['is_staff'] = user.is_staff
+        token['user_id'] = user.id
+        token['is_vendedor'] = Inmueble.objects.filter(usuario=user).exists()
+        
+        # Verificar si el usuario tiene perfil de cliente
+        try:
+            cliente_profile = Cliente.objects.get(user=user)
+            token['is_cliente'] = True
+            token['cliente_id'] = cliente_profile.id
+        except Cliente.DoesNotExist:
+            token['is_cliente'] = False
+            token['cliente_id'] = None
+        
+        return token
+
+
 class CustomTokenObtainPairView(TokenObtainPairView):
     """
     Vista personalizada para el login que agrega claims personalizados al token
     """
-    def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == 200:
-            try:
-                user = User.objects.get(username=request.data.get('username'))
-                # Obtener el refresh token de la respuesta
-                refresh_token_str = response.data.get('refresh')
-                if refresh_token_str:
-                    refresh = RefreshToken(refresh_token_str)
-                else:
-                    refresh = RefreshToken.for_user(user)
-                
-                # Agregar claims personalizados
-                refresh['username'] = user.username
-                refresh['is_staff'] = user.is_staff
-                refresh['user_id'] = user.id
-                refresh['is_vendedor'] = Inmueble.objects.filter(usuario=user).exists()
-                # Verificar si el usuario tiene perfil de cliente
-                try:
-                    cliente_profile = Cliente.objects.get(user=user)
-                    refresh['is_cliente'] = True
-                    refresh['cliente_id'] = cliente_profile.id
-                except Cliente.DoesNotExist:
-                    refresh['is_cliente'] = False
-                    refresh['cliente_id'] = None
-                
-                # Actualizar la respuesta con el nuevo token
-                response.data['access'] = str(refresh.access_token)
-                response.data['refresh'] = str(refresh)
-            except Exception as e:
-                # Si hay error, devolver la respuesta original
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Error al personalizar token: {str(e)}")
-        return response
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class ProfileView(APIView):
