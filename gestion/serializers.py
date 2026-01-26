@@ -16,8 +16,14 @@ class PropietarioSerializer(serializers.ModelSerializer):
 
 
 class ClienteSerializer(serializers.ModelSerializer):
-    user_id = serializers.IntegerField(source='user.id', read_only=True)
-    username = serializers.CharField(source='user.username', read_only=True)
+    user_id = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+
+    def get_user_id(self, obj):
+        return obj.user.id if obj.user else None
+
+    def get_username(self, obj):
+        return obj.user.username if obj.user else None
 
     class Meta:
         model = Cliente
