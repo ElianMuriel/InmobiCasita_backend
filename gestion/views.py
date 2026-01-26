@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -121,7 +121,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             
             # Verificar si el usuario es vendedor (tiene inmuebles registrados)
             try:
-                token['is_vendedor'] = bool(Inmueble.objects.filter(usuario=user).exists())
+                token['is_vendedor'] = bool(user.groups.filter(name='Vendedor').exists())
             except Exception:
                 token['is_vendedor'] = False
             
@@ -252,7 +252,7 @@ def register(request):
         refresh['username'] = user.username
         refresh['is_staff'] = user.is_staff
         refresh['user_id'] = user.id
-        refresh['is_vendedor'] = Inmueble.objects.filter(usuario=user).exists()
+        refresh['is_vendedor'] = user.groups.filter(name='Vendedor').exists()
         refresh['is_cliente'] = True
         refresh['cliente_id'] = cliente.id
 
