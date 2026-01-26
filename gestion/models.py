@@ -107,14 +107,25 @@ class Inmueble(models.Model):
     def save(self, *args, **kwargs):
         # Generar código interno automáticamente si no se proporciona
         if not self.codigo_interno:
-            # Formato: INM-YYYYMMDD-HHMMSS-ID
-            from django.utils import timezone
             from datetime import datetime
+            import random
+            import time
+            # Formato: INM-YYYYMMDD-HHMMSS-RANDOM
             timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-            # Obtener el último ID o usar un contador
-            last_inmueble = Inmueble.objects.order_by('-id').first()
-            next_id = (last_inmueble.id + 1) if last_inmueble else 1
-            self.codigo_interno = f'INM-{timestamp}-{next_id:04d}'
+            random_suffix = random.randint(1000, 9999)
+            self.codigo_interno = f'INM-{timestamp}-{random_suffix}'
+            # Asegurar que sea único (excluir el objeto actual si está siendo editado)
+            queryset = Inmueble.objects.filter(codigo_interno=self.codigo_interno)
+            if self.pk:
+                queryset = queryset.exclude(pk=self.pk)
+            while queryset.exists():
+                time.sleep(0.01)  # Pequeña pausa para cambiar el timestamp
+                timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+                random_suffix = random.randint(1000, 9999)
+                self.codigo_interno = f'INM-{timestamp}-{random_suffix}'
+                queryset = Inmueble.objects.filter(codigo_interno=self.codigo_interno)
+                if self.pk:
+                    queryset = queryset.exclude(pk=self.pk)
         super().save(*args, **kwargs)
 
     def __str__(self):
