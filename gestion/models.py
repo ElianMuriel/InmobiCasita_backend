@@ -87,7 +87,7 @@ class Inmueble(models.Model):
         related_name='inmuebles_registrados'
     )
 
-    codigo_interno = models.CharField(max_length=50, unique=True)
+    codigo_interno = models.CharField(max_length=50, unique=True, blank=True, null=True)
     titulo = models.CharField(max_length=150)
     descripcion = models.TextField(blank=True)
     direccion = models.CharField(max_length=200)
@@ -103,6 +103,19 @@ class Inmueble(models.Model):
     area_m2 = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='DISPONIBLE')
+
+    def save(self, *args, **kwargs):
+        # Generar código interno automáticamente si no se proporciona
+        if not self.codigo_interno:
+            # Formato: INM-YYYYMMDD-HHMMSS-ID
+            from django.utils import timezone
+            from datetime import datetime
+            timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+            # Obtener el último ID o usar un contador
+            last_inmueble = Inmueble.objects.order_by('-id').first()
+            next_id = (last_inmueble.id + 1) if last_inmueble else 1
+            self.codigo_interno = f'INM-{timestamp}-{next_id:04d}'
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.codigo_interno} - {self.titulo}"
