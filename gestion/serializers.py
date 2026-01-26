@@ -14,12 +14,13 @@ class PropietarioSerializer(serializers.ModelSerializer):
         model = Propietario
         fields = '__all__'
 
-
 class ClienteSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source='user.id', read_only=True)
+    username = serializers.CharField(source='user.username', read_only=True)
+    
     class Meta:
         model = Cliente
         fields = '__all__'
-
 
 class TipoInmuebleSerializer(serializers.ModelSerializer):
     class Meta:

@@ -41,6 +41,13 @@ class Cliente(models.Model):
     ciudad = models.CharField(max_length=100, blank=True)
     tipo_cliente = models.CharField(max_length=20, choices=TIPO_CLIENTE_CHOICES, default='COMPRADOR')
     activo = models.BooleanField(default=True)
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='cliente_profile'
+    )
 
     def __str__(self):
         return f"{self.nombres} {self.apellidos}"

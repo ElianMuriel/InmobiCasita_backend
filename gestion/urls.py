@@ -2,9 +2,9 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from .views import (
-    RolViewSet, PropietarioViewSet, ClienteViewSet,
-    TipoInmuebleViewSet, InmuebleViewSet,
-    VisitaViewSet, ContratoViewSet, PagoViewSet
+       RolViewSet, PropietarioViewSet, ClienteViewSet,
+       TipoInmuebleViewSet, InmuebleViewSet,
+       VisitaViewSet, ContratoViewSet, PagoViewSet, ProfileView, register, mi_cliente
 )
 
 router = DefaultRouter()
@@ -19,4 +19,7 @@ router.register(r'pagos', PagoViewSet, basename='pago')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('profile/', ProfileView.as_view(), name='profile'),
+    path('auth/register/', register, name='register'),
+    path('auth/mi-cliente/', mi_cliente, name='mi-cliente'),
 ]
