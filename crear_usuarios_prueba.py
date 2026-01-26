@@ -23,14 +23,14 @@ vendedor_user = User.objects.create_user(
 # NO crear perfil de Cliente para el vendedor
 # Los vendedores se identifican por tener inmuebles registrados (campo usuario en Inmueble)
 
-# Crear un propietario de prueba
-propietario = Propietario.objects.create(
-    nombres='María',
-    apellidos='Propietaria',
-    identificacion='9876543210',
-    email='maria@example.com',
-    telefono='3009876543',
-    direccion='Calle 456',
+# Crear un Propietario para el vendedor (el vendedor también es propietario)
+propietario_vendedor = Propietario.objects.create(
+    nombres='Juan',
+    apellidos='Vendedor',
+    identificacion='1234567890',
+    email='vendedor@inmobicasita.com',
+    telefono='3001234567',
+    direccion='Calle 123',
     ciudad='Bogotá',
     activo=True
 )
@@ -44,7 +44,7 @@ tipo_inmueble, _ = TipoInmueble.objects.get_or_create(
 # Crear un inmueble para que el usuario sea VENDEDOR
 inmueble = Inmueble.objects.create(
     tipo=tipo_inmueble,
-    propietario=propietario,
+    propietario=propietario_vendedor,  # El vendedor es también el propietario
     usuario=vendedor_user,  # Esto hace que sea VENDEDOR
     codigo_interno='APT-001',
     titulo='Apartamento en el centro',
@@ -63,8 +63,9 @@ inmueble = Inmueble.objects.create(
 print(f"✅ Usuario VENDEDOR creado:")
 print(f"   Username: {vendedor_user.username}")
 print(f"   Password: vendedor123")
+print(f"   Propietario: {propietario_vendedor.nombres} {propietario_vendedor.apellidos}")
 print(f"   Inmueble creado: {inmueble.codigo_interno}")
-print(f"   NOTA: El vendedor NO tiene perfil de Cliente")
+print(f"   NOTA: El vendedor NO tiene perfil de Cliente, pero SÍ es Propietario")
 
 # 2. Crear usuario CLIENTE
 print("\nCreando usuario CLIENTE...")
