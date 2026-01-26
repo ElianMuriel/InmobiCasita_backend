@@ -113,17 +113,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         
-        # Agregar claims personalizados al access token
-        token['username'] = user.username
-        token['is_staff'] = user.is_staff
-        token['user_id'] = user.id
-        token['is_vendedor'] = Inmueble.objects.filter(usuario=user).exists()
+        # Agregar claims personalizados al token (se propagan al access token)
+        token['username'] = str(user.username)
+        token['is_staff'] = bool(user.is_staff)
+        token['user_id'] = int(user.id)
+        token['is_vendedor'] = bool(Inmueble.objects.filter(usuario=user).exists())
         
         # Verificar si el usuario tiene perfil de cliente
         try:
             cliente_profile = Cliente.objects.get(user=user)
             token['is_cliente'] = True
-            token['cliente_id'] = cliente_profile.id
+            token['cliente_id'] = int(cliente_profile.id)
         except Cliente.DoesNotExist:
             token['is_cliente'] = False
             token['cliente_id'] = None
