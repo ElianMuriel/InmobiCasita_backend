@@ -113,18 +113,38 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def get_token(cls, user):
         token = super().get_token(user)
         
-        # Agregar claims personalizados al token (se propagan al access token)
-        token['username'] = str(user.username)
-        token['is_staff'] = bool(user.is_staff)
-        token['user_id'] = int(user.id)
-        token['is_vendedor'] = bool(Inmueble.objects.filter(usuario=user).exists())
-        
-        # Verificar si el usuario tiene perfil de cliente
         try:
-            cliente_profile = Cliente.objects.get(user=user)
-            token['is_cliente'] = True
-            token['cliente_id'] = int(cliente_profile.id)
-        except Cliente.DoesNotExist:
+            # Agregar claims personalizados al token (se propagan al access token)
+            token['username'] = str(user.username)
+            token['is_staff'] = bool(user.is_staff)
+            token['user_id'] = int(user.id)
+            
+            # Verificar si el usuario es vendedor (tiene inmuebles registrados)
+            try:
+                token['is_vendedor'] = bool(Inmueble.objects.filter(usuario=user).exists())
+            except Exception:
+                token['is_vendedor'] = False
+            
+            # Verificar si el usuario tiene perfil de cliente
+            try:
+                cliente_profile = Cliente.objects.get(user=user)
+                token['is_cliente'] = True
+                token['cliente_id'] = int(cliente_profile.id)
+            except Cliente.DoesNotExist:
+                token['is_cliente'] = False
+                token['cliente_id'] = None
+            except Exception:
+                token['is_cliente'] = False
+                token['cliente_id'] = None
+        except Exception as e:
+            # Si hay algún error, al menos agregar los campos básicos
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error al agregar claims personalizados: {str(e)}")
+            token['username'] = str(user.username)
+            token['is_staff'] = bool(user.is_staff)
+            token['user_id'] = int(user.id)
+            token['is_vendedor'] = False
             token['is_cliente'] = False
             token['cliente_id'] = None
         
