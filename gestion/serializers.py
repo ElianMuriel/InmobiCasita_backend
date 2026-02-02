@@ -27,14 +27,19 @@ class ClienteSerializer(serializers.ModelSerializer):
         return obj.user.username if obj.user else None
 
     def create(self, validated_data):
+        print(f'DEBUG: validated_data = {validated_data}')
+        
         # Extraer el flag crear_usuario (no es un campo del modelo)
         crear_usuario = validated_data.pop('crear_usuario', True)
+        print(f'DEBUG: crear_usuario = {crear_usuario}')
 
         # Si crear_usuario es True, crear el usuario automaticamente
         if crear_usuario:
             email = validated_data.get('email', '')
             identificacion = validated_data.get('identificacion', '')
             nombres = validated_data.get('nombres', '')
+
+            print(f'DEBUG: Intentando crear usuario - email={email}, identificacion={identificacion}')
 
             # Verificar que tenga email e identificacion
             if not email or not identificacion:
@@ -48,21 +53,33 @@ class ClienteSerializer(serializers.ModelSerializer):
                     'El correo electrónico ya está registrado como usuario'
                 )
 
-            # Crear el usuario
-            # Username = email (garantiza unicidad)
-            # Password = identificación
-            user = User.objects.create_user(
-                username=email,
-                password=identificacion,
-                email=email,
-                first_name=nombres or '',
-                is_staff=False,
-                is_active=True
-            )
+            try:
+                # Crear el usuario
+                # Username = email (garantiza unicidad)
+                # Password = identificación
+                user = User.objects.create_user(
+                    username=email,
+                    password=identificacion,
+                    email=email,
+                    first_name=nombres or '',
+                    is_staff=False,
+                    is_active=True
+                )
+                print(f'DEBUG: Usuario creado exitosamente: {user}')
 
-            validated_data['user'] = user
+                validated_data['user'] = user
+            except Exception as e:
+                print(f'ERROR: No se pudo crear el usuario: {str(e)}')
+                raise serializers.ValidationError(f'Error al crear usuario: {str(e)}')
 
-        return super().create(validated_data)
+        # Crear el cliente
+        try:
+            cliente = super().create(validated_data)
+            print(f'DEBUG: Cliente creado exitosamente: {cliente}')
+            return cliente
+        except Exception as e:
+            print(f'ERROR: No se pudo crear el cliente: {str(e)}')
+            raise
 
     def update(self, instance, validated_data):
         # No procesar crear_usuario en updates
@@ -72,7 +89,7 @@ class ClienteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Cliente
         fields = ['id', 'nombres', 'apellidos', 'identificacion', 'telefono', 'email', 
-                  'direccion', 'ciudad', 'tipo_cliente', 'activo', 'user', 'user_id', 'username', 'crear_usuario']
+                  'direccion', 'ciudad', 'tipo_cliente', 'activo', 'user_id', 'username', 'crear_usuario']
 
 
 class TipoInmuebleSerializer(serializers.ModelSerializer):
