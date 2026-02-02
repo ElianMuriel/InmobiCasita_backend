@@ -32,33 +32,29 @@ class ClienteSerializer(serializers.ModelSerializer):
         
         # Si crear_usuario es True, crear el usuario automaticamente
         if crear_usuario:
-            nombres = validated_data.get('nombres', '')
-            identificacion = validated_data.get('identificacion', '')
             email = validated_data.get('email', '')
+            identificacion = validated_data.get('identificacion', '')
+            nombres = validated_data.get('nombres', '')
             
-            # Verificar que tenga nombres e identificacion
-            if not nombres or not identificacion:
+            # Verificar que tenga email e identificacion
+            if not email or not identificacion:
                 raise serializers.ValidationError(
-                    'Se requieren nombres e identificacion para crear usuario automaticamente'
+                    'Se requieren correo electrónico e identificación para crear usuario automáticamente'
                 )
             
-            # Crear usuario con username = nombres e identificacion como contrasena
-            username = nombres.replace(' ', '_').lower()[:30]  # Limitar a 30 caracteres
-            
-            # Verificar que el username no exista
-            if User.objects.filter(username=username).exists():
-                # Si ya existe, agregar un sufijo
-                counter = 1
-                original_username = username
-                while User.objects.filter(username=username).exists():
-                    username = f"{original_username}_{counter}"
-                    counter += 1
+            # Verificar que el email no exista como usuario
+            if User.objects.filter(username=email).exists():
+                raise serializers.ValidationError(
+                    'El correo electrónico ya está registrado como usuario'
+                )
             
             # Crear el usuario
+            # Username = email (garantiza unicidad)
+            # Password = identificación
             user = User.objects.create_user(
-                username=username,
+                username=email,
                 password=identificacion,
-                email=email or '',
+                email=email,
                 first_name=nombres or '',
                 is_staff=False,
                 is_active=True
