@@ -72,6 +72,19 @@ class ClienteViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrVendedorOrReadOnly]
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['nombres', 'apellidos', 'identificacion', 'ciudad', 'tipo_cliente']
+    
+    def create(self, request, *args, **kwargs):
+        from django.db import transaction
+        
+        try:
+            with transaction.atomic():
+                response = super().create(request, *args, **kwargs)
+                return response
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class TipoInmuebleViewSet(viewsets.ModelViewSet):
