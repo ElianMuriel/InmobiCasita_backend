@@ -39,18 +39,18 @@ class ClienteSerializer(serializers.ModelSerializer):
             # Verificar que tenga email e identificacion
             if not email or not identificacion:
                 raise serializers.ValidationError(
-                    'Se requieren correo electrónico e identificación para crear usuario automáticamente'
+                    'Se requieren correo electrï¿½nico e identificaciï¿½n para crear usuario automï¿½ticamente'
                 )
 
             # Verificar que el email no exista como usuario
             if User.objects.filter(username=email).exists():
                 raise serializers.ValidationError(
-                    'El correo electrónico ya está registrado como usuario'
+                    'El correo electrï¿½nico ya estï¿½ registrado como usuario'
                 )
 
             # Crear el usuario
             # Username = email (garantiza unicidad)
-            # Password = identificación
+            # Password = identificaciï¿½n
             user = User.objects.create_user(
                 username=email,
                 password=identificacion,
