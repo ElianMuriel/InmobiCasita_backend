@@ -29,28 +29,28 @@ class ClienteSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         # Extraer el flag crear_usuario (no es un campo del modelo)
         crear_usuario = validated_data.pop('crear_usuario', True)
-        
+
         # Si crear_usuario es True, crear el usuario automaticamente
         if crear_usuario:
             email = validated_data.get('email', '')
             identificacion = validated_data.get('identificacion', '')
             nombres = validated_data.get('nombres', '')
-            
+
             # Verificar que tenga email e identificacion
             if not email or not identificacion:
                 raise serializers.ValidationError(
-                    'Se requieren correo electr√≥nico e identificaci√≥n para crear usuario autom√°ticamente'
+                    'Se requieren correo electrÛnico e identificaciÛn para crear usuario autom·ticamente'
                 )
-            
+
             # Verificar que el email no exista como usuario
             if User.objects.filter(username=email).exists():
                 raise serializers.ValidationError(
-                    'El correo electr√≥nico ya est√° registrado como usuario'
+                    'El correo electrÛnico ya est· registrado como usuario'
                 )
-            
+
             # Crear el usuario
             # Username = email (garantiza unicidad)
-            # Password = identificaci√≥n
+            # Password = identificaciÛn
             user = User.objects.create_user(
                 username=email,
                 password=identificacion,
@@ -59,9 +59,9 @@ class ClienteSerializer(serializers.ModelSerializer):
                 is_staff=False,
                 is_active=True
             )
-            
+
             validated_data['user'] = user
-        
+
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
@@ -71,7 +71,8 @@ class ClienteSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Cliente
-        fields = '__all__'
+        fields = ['id', 'nombres', 'apellidos', 'identificacion', 'telefono', 'email', 
+                  'direccion', 'ciudad', 'tipo_cliente', 'activo', 'user_id', 'username', 'crear_usuario']
 
 
 class TipoInmuebleSerializer(serializers.ModelSerializer):
